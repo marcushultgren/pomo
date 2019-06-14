@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <meta name="theme-color" content="#317EFB" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="shortcut icon" href="" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/kognise/water.css@latest/dist/dark.min.css">
+    <title>Pomo</title>
+  </head>
+  <body>
+    <div id="clock">0</div>
+    <input id="duration-input" type="text" value="25m" />
+    <br />
+    <input id="volume-input" type="range" min="0" max="100" />
+    <br />
+    <button id="start" type="submit">Start</button>
+    <button id="stop">Stop</button>
+    <button id="sound-test">Test sound</button>
+    <script type="text/javascript">
+      var soundTestButton = document.getElementById('sound-test');
+      var startButton = document.getElementById('start');
+      var stopButton = document.getElementById('stop');
+      var durationInput = document.getElementById('duration-input');
+      var volumeInput = document.getElementById('volume-input');
+      var clock = document.getElementById('clock');
+      var durationRemaining;
+      var intervalID;
+      var audio = new Audio('sound.mp3');
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('sw.js').then(
+            function(registration) {
+              // Registration was successful
+              console.log(
+                'ServiceWorker registration successful with scope: ',
+                registration.scope
+              );
+            },
+            function(err) {
+              // registration failed :(
+              console.log('ServiceWorker registration failed: ', err);
+            }
+          );
+        });
+      }
+
+      function playAudio() {
+        audio.volume = volumeInput.value / 100;
+        audio.play();
+      }
+
+      function updateClock(seconds) {
+        var mmss = secondsToMMSS(seconds);
+        clock.innerText = mmss;
+        document.title = mmss;
+      }
+
+      function pad(value) {
+        return value.toString().length >= 2 ? value : '0' + value;
+      }
+
+      function secondsToMMSS(seconds) {
+        var minutes = Math.floor(seconds / 60);
+        var seconds = seconds - minutes * 60;
+        return pad(minutes) + ':' + pad(seconds);
+      }
+
+      soundTestButton.addEventListener('click', function() {
+        playAudio();
+      });
+
+      startButton.addEventListener('click', function() {
+        var value = durationInput.value;
+        if (value.indexOf('m') > -1) {
+          value = value.replace('m', '');
+          value = value * 60;
+        }
+        durationRemaining = +value;
+        updateClock(durationRemaining);
+        intervalID = setInterval(function() {
+          durationRemaining--;
+          updateClock(durationRemaining);
+          if (durationRemaining <= 0) {
+            clearInterval(intervalID);
+            playAudio();
+          }
+        }, 1000);
+      });
+
+      stopButton.addEventListener('click', function() {
+        clearInterval(intervalID);
+      });
+    </script>
+  </body>
+</html>
