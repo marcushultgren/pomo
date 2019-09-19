@@ -264,10 +264,10 @@
     </style>
   </head>
   <body>
-    <div id="clock">0</div>
+    <div id="clock" style="margin-bottom: 1rem; font-size: 1.5rem;">0</div>
     <input id="duration-input" type="text" value="25m" />
     <br />
-    <input id="volume-input" type="range" min="0" max="100" />
+    <input id="volume-input" type="range" value="80" min="0" max="100" />
     <br />
     <button id="start" type="submit">Start</button>
     <button id="stop">Stop</button>
@@ -281,6 +281,7 @@
       var clock = document.getElementById('clock');
       var durationRemaining;
       var intervalID;
+      var startTimestamp;
       var audio = new Audio('sound.mp3');
 
       if ('serviceWorker' in navigator) {
@@ -327,6 +328,7 @@
       });
 
       startButton.addEventListener('click', function() {
+        startTimestamp = Date.now();
         var value = durationInput.value;
         if (value.indexOf('m') > -1) {
           value = value.replace('m', '');
@@ -335,7 +337,7 @@
         durationRemaining = +value;
         updateClock(durationRemaining);
         intervalID = setInterval(function() {
-          durationRemaining--;
+          durationRemaining -= (Date.now() - startTimestamp) / 1000;
           updateClock(durationRemaining);
           if (durationRemaining <= 0) {
             clearInterval(intervalID);
