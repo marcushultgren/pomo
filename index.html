@@ -308,7 +308,7 @@
       }
 
       function updateClock(seconds) {
-        var mmss = secondsToMMSS(seconds);
+        var mmss = secondsToMMSS(Math.round(seconds));
         clock.innerText = mmss;
         document.title = mmss;
       }
@@ -335,9 +335,11 @@
           value = value * 60;
         }
         durationRemaining = +value;
+        startDuration = +value;
         updateClock(durationRemaining);
         intervalID = setInterval(function() {
-          durationRemaining -= (Date.now() - startTimestamp) / 1000;
+          console.log(durationRemaining)
+          durationRemaining = startDuration - ((Date.now() - startTimestamp) / 1000);
           updateClock(durationRemaining);
           if (durationRemaining <= 0) {
             clearInterval(intervalID);
