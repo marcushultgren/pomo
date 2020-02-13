@@ -268,10 +268,12 @@
     <input id="duration-input" type="text" value="25m" />
     <br />
     <input id="volume-input" type="range" value="80" min="0" max="100" />
-    <br />
+    <br>
     <button id="start" type="submit">Start</button>
     <button id="stop">Stop</button>
     <button id="sound-test">Test sound</button>
+    <br>
+    <div id="logs"></div>
     <script type="text/javascript">
       var soundTestButton = document.getElementById('sound-test');
       var startButton = document.getElementById('start');
@@ -279,10 +281,12 @@
       var durationInput = document.getElementById('duration-input');
       var volumeInput = document.getElementById('volume-input');
       var clock = document.getElementById('clock');
+      var logsContainer = document.getElementById('logs');
       var durationRemaining;
       var intervalID;
       var startTimestamp;
       var audio = new Audio('sound.mp3');
+      var logs = [];
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
@@ -309,6 +313,7 @@
       }
 
       function updateClock(seconds) {
+        seconds = seconds < 0 ? 0 : seconds;
         var mmss = secondsToMMSS(Math.round(seconds));
         clock.innerText = mmss;
         document.title = mmss;
@@ -328,8 +333,38 @@
         playAudio();
       });
 
+      function logStart(timestamp) {
+        logs.push({started: new Date(timestamp)});
+        renderLogs(logs);
+      }
+
+      function logEnd(timestamp) {
+        let lastEntry = logs[logs.length - 1];
+        lastEntry.ended = new Date(timestamp);
+        renderLogs(logs);
+      }
+
+      function renderLogs(logs) {
+        const nodes = [];
+        logs.forEach((log, index) => {
+          const duration = log.ended ? log.ended.getTime() - log.started.getTime() : 0;
+          nodes.push(`
+            <li>
+              Started #${index + 1} at ${log.started.toLocaleString()}
+              ${log.ended ? ' - ended at ' + log.ended.toLocaleString() : ''}
+              ${duration ? `(${Math.round(duration / 1000 / 60)} min)` : ''}
+            </li>
+          `);
+        });
+        logsContainer.innerHTML = nodes.join('');
+      }
+
       startButton.addEventListener('click', function() {
+        if (intervalID) {
+          clearInterval(intervalID);
+        }
         startTimestamp = Date.now();
+        logStart(startTimestamp);
         var value = durationInput.value;
         if (value.indexOf('m') > -1) {
           value = value.replace('m', '');
@@ -339,18 +374,27 @@
         startDuration = +value;
         updateClock(durationRemaining);
         intervalID = setInterval(function() {
-          console.log(durationRemaining)
           durationRemaining = startDuration - ((Date.now() - startTimestamp) / 1000);
           updateClock(durationRemaining);
           if (durationRemaining <= 0) {
-            clearInterval(intervalID);
+            endSession();
             playAudio();
           }
         }, 1000);
       });
 
-      stopButton.addEventListener('click', function() {
+      function endSession() {
         clearInterval(intervalID);
+        if (logs.length) {
+          const lastEntry = logs[logs.length - 1];
+          if (!lastEntry.ended) {
+            logEnd(Date.now());
+          }
+        }
+      }
+
+      stopButton.addEventListener('click', function () {
+        endSession();
       });
     </script>
   </body>
