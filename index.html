@@ -303,6 +303,7 @@
       }
 
       function playAudio() {
+        audio.currentTime = 0;
         audio.volume = volumeInput.value / 100;
         audio.play();
       }
