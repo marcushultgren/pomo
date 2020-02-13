@@ -269,6 +269,8 @@
     <br />
     <input id="volume-input" type="range" value="80" min="0" max="100" />
     <br>
+    <input id="work-description" type="text" placeholder="What are you gonna work on?">
+    <br>
     <button id="start" type="submit">Start</button>
     <button id="stop">Stop</button>
     <button id="sound-test">Test sound</button>
@@ -282,6 +284,7 @@
       var volumeInput = document.getElementById('volume-input');
       var clock = document.getElementById('clock');
       var logsContainer = document.getElementById('logs');
+      var workDescription = document.getElementById('work-description');
       var durationRemaining;
       var intervalID;
       var startTimestamp;
@@ -334,7 +337,13 @@
       });
 
       function logStart(timestamp) {
-        logs.push({started: new Date(timestamp)});
+        const newEntry = {started: new Date(timestamp)};
+        const explanation = workDescription.value;
+        if (explanation) {
+            newEntry.description = explanation;
+            workDescription.value = '';
+        }
+        logs.push(newEntry);
         renderLogs(logs);
       }
 
@@ -353,6 +362,7 @@
               Started #${index + 1} at ${log.started.toLocaleString()}
               ${log.ended ? ' - ended at ' + log.ended.toLocaleString() : ''}
               ${duration ? `(${Math.round(duration / 1000 / 60)} min)` : ''}
+              ${log.description ? '@ ' + log.description : ''}
             </li>
           `);
         });
